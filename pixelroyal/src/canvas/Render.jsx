@@ -168,7 +168,7 @@ const Movement = ({ canvas, context, handle }) => {
     drawpointer();
   };
 
-  const handleScale = (ds) => {
+  const handleScale = async (ds) => {
     if (ds !== undefined) {
       const move = Math.round(ds * (((2000000+CANVASSIZE-256)-(scale.current+2000000)) * 0.0001));
 
@@ -232,12 +232,12 @@ const Movement = ({ canvas, context, handle }) => {
     context.imageSmoothingEnabled = false;
   };
 
-  const handleWheel = (e) => {
+  const handleWheel = async (e) => {
     console.log((CANVASSIZE-scale.current)/CANVASSIZE + "b");
     
     let PREVSCALE = (CANVASSIZE-scale.current)/CANVASSIZE;
     
-    handleScale(e.deltaY);
+    await handleScale(e.deltaY);
 
     let AFTERSCALE = (CANVASSIZE-scale.current)/CANVASSIZE;
 
@@ -245,9 +245,7 @@ const Movement = ({ canvas, context, handle }) => {
     console.log((CANVASSIZE-scale.current)/CANVASSIZE + "a");
 
     position.current.x += (PREVSCALE-AFTERSCALE)*PXCOORDX;
-
-    
-    //position.current.x -= Math.round(scale.current/256);
+    position.current.y += (PREVSCALE-AFTERSCALE)*PXCOORDY;
   };
   
   useEffect(() => {
