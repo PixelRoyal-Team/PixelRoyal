@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import Buttons from '../ui/Buttons';
 
-import loadingchunkimg from '/pixgame/src/public/game/LoadingChunk.png';
-import pointerimg from '/pixgame/src/public/game/pxpointer.png'
+import loadingchunkimg from '../public/game/LoadingChunk.png';
+import pointerimg from '../public/game/pxpointer.png'
 
 const Movement = ({ canvas, context, handle }) => {
   //setup global
@@ -17,23 +17,29 @@ const Movement = ({ canvas, context, handle }) => {
 
   var PXPOSX;
   var PXPOSY;
-
+ 
+  var PRECPXCOORDX;
+  var PRECPXCOORDY;
+  
   var PXCOORDX;
   var PXCOORDY;
   
-  var CANVASVIEWSIZE;
-  var PIXELVIEWSIZE;
-  
   const CANVASSIZE = 256*256;
   const CHUNKSIZE = 256;
+  var CANVASVIEWSIZE;
+  var PIXELVIEWSIZE;
+  var SCALEFACTOR;
+  const LAYERNUM = 8;
+  const LAYERSIZES = [256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536];
+  const LAYERCSIZES = [65536, 32768, 16384, 8192, 4096, 2048, 1024, 512, 256];
   
-  const position = useRef({ x: 0, y: 0 });
-  const scale = useRef(0);
+  const position = useRef({ x: -(CANVASSIZE/2-CVSWIDTH/2), y: -(CANVASSIZE/2-CVSWIDTH/2) });
+  const scale = useRef(1);
   const mousePos = useRef({ x: 0, y: 0});
   const isDragging = useRef(false);
   const lastTouch = useRef(null);
   const lastMouse = useRef(null);
-
+  
   //const position = useRef({ x: -(CANVASSIZE/2-CVSWIDTH/2)-positioncoord.x, y: -(CANVASSIZE/2-CVSWIDTH/2)-positioncoord.y});
 
   const [coordX, setCoordX] = useState(0);
@@ -41,7 +47,7 @@ const Movement = ({ canvas, context, handle }) => {
   const [mouseX, setMouseX] = useState(0);
   const [mouseY, setMouseY] = useState(0);
   
-  const tileserver = new URL(location.protocol + "//" + location.hostname + ":3002");
+  const tileserver = new URL(location.protocol + "//" + location.hostname + ":3002/");
   
   //load assets
   var loading = new Image()
@@ -49,6 +55,12 @@ const Movement = ({ canvas, context, handle }) => {
   var pointer = new Image()
   pointer.src = pointerimg;
   var chunkloader = [[],[],[],[],[],[],[],[],[]];
+
+  function setValues() {
+    PIXELVIEWSIZE = scale.current;
+    CANVASVIEWSIZE = PIXELVIEWSIZE*CANVASSIZE;
+    SCALEFACTOR = CANVASSIZE-CANVASVIEWSIZE;
+  }
   
   const draw = () => {
     
@@ -62,37 +74,29 @@ const Movement = ({ canvas, context, handle }) => {
     }
     
     context.clearRect(0, 0, CVSWIDTH, CVSHEIGHT);
-    
-    //context.save();
-    //context.scale(scale, scale);
 
-    setCoordX(position.current.x);
-    setCoordY(position.current.y);
+    setCoordX(Math.floor(position.current.x/PIXELVIEWSIZE)+(CANVASSIZE/2-CVSWIDTH/2));
+    setCoordY(Math.floor(position.current.y/PIXELVIEWSIZE)+(CANVASSIZE/2-CVSWIDTH/2));
     
-    //CALCULATE LAYERS DEMO WORK IN PROGRESS!!!
-    
-    CANVASVIEWSIZE = CANVASSIZE-scale.current; //How much canvas is big on render
-    //console.log(CANVASVIEWSIZE);
-    PIXELVIEWSIZE = CANVASVIEWSIZE/CANVASSIZE; //How much pixels are big on render
-    const LAYERNUM = 8;
-    const LAYERSIZES = [256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536];
-    const LAYERCSIZES = [65536, 32768, 16384, 8192, 4096, 2048, 1024, 512, 256];
+    //CALCULATE LAYERS
 
+    setValues();
+    
     var layer;
 
     if (CANVASVIEWSIZE >= 256) {
     for (let i = LAYERNUM; i >= 0; i--) {
       if (LAYERSIZES[i] <= CANVASVIEWSIZE) {
-        var layer = i;
+        layer = i;
         break;
       }
     }
     } else {
-      var layer = 0;
+      layer = 0;
     }
     
     var layerchunks = (65536/LAYERCSIZES[layer]); //How many chunks are in a layer
-    var layersize = LAYERCSIZES[layer]-Math.round(scale.current/layerchunks); //How big is the layer chunks also affected by scale
+    var layersize = LAYERCSIZES[layer]-SCALEFACTOR/layerchunks; //How big is the layer chunks also affected by scale
     
     var repx = Math.round(CVSWIDTH / 256)+1;
     var repy = Math.round(CVSHEIGHT / 256)+1;
@@ -126,7 +130,7 @@ const Movement = ({ canvas, context, handle }) => {
       } else {
         
         var chunk = new Image(CHUNKSIZE, CHUNKSIZE);
-        chunk.src = tileserver + "/" + layer + "/"+ cx + "/" + cy + ".png";
+        chunk.src = tileserver + layer + "/"+ cx + "/" + cy + ".png";
 
         loadchunk(loading);
         
@@ -147,17 +151,26 @@ const Movement = ({ canvas, context, handle }) => {
       chunkx = startx;
       chunky++;
     }
-    //context.restore();
+	
     function drawpointer() {
       CANVASMX = mousePos.current.x - position.current.x;
       CANVASMY = mousePos.current.y - position.current.y;
-      
-      PXPOSX = Math.floor(CANVASMX/PIXELVIEWSIZE)*PIXELVIEWSIZE;
-      PXPOSY = Math.floor(CANVASMY/PIXELVIEWSIZE)*PIXELVIEWSIZE;
 
+      PRECPXCOORDX = CANVASMX/PIXELVIEWSIZE;
+	  PRECPXCOORDY = CANVASMY/PIXELVIEWSIZE;
+	  
       PXCOORDX = Math.floor(CANVASMX/PIXELVIEWSIZE);
-      PXCOORDY = Math.floor(CANVASMY/PIXELVIEWSIZE)
+      PXCOORDY = Math.floor(CANVASMY/PIXELVIEWSIZE);
       
+	  PXCOORDX = Math.min(PXCOORDX, CANVASSIZE-1);
+      PXCOORDX = Math.max(PXCOORDX, 0);
+	  
+	  PXCOORDY = Math.min(PXCOORDY, CANVASSIZE-1);
+      PXCOORDY = Math.max(PXCOORDY, 0);
+	  
+	  PXPOSX = PXCOORDX*PIXELVIEWSIZE;
+      PXPOSY = PXCOORDY*PIXELVIEWSIZE;
+	  
       setMouseX(PXCOORDX);
       setMouseY(PXCOORDY);
 
@@ -170,14 +183,17 @@ const Movement = ({ canvas, context, handle }) => {
 
   const handleScale = async (ds) => {
     if (ds !== undefined) {
-      const move = Math.round(ds * (((2000000+CANVASSIZE-256)-(scale.current+2000000)) * 0.0001));
-
-      scale.current += move;
-
-      scale.current = Math.min(scale.current, CANVASSIZE-256);
-      scale.current = Math.max(scale.current, -2000000);
       
-      return move;
+      let move = (ds/100)*(scale.current*0.1);
+	  move = Math.sign(move)*Math.max(Math.abs(move), 0.001);
+      
+      scale.current -= move;
+	  console.log(move + "scale:" + scale.current);
+
+      scale.current = (scale.current).toFixed(3);
+
+      scale.current = Math.min(scale.current, 10);
+      scale.current = Math.max(scale.current, 0.0035);
     }
   }
 
@@ -233,19 +249,17 @@ const Movement = ({ canvas, context, handle }) => {
   };
 
   const handleWheel = async (e) => {
-    console.log((CANVASSIZE-scale.current)/CANVASSIZE + "b");
-    
-    let PREVSCALE = (CANVASSIZE-scale.current)/CANVASSIZE;
+    let PREVSCALE = (CANVASSIZE-SCALEFACTOR)/CANVASSIZE;
     
     await handleScale(e.deltaY);
+    
+    setValues();
 
-    let AFTERSCALE = (CANVASSIZE-scale.current)/CANVASSIZE;
+    let AFTERSCALE = (CANVASSIZE-SCALEFACTOR)/CANVASSIZE;
 
-    console.log(PREVSCALE-AFTERSCALE);
-    console.log((CANVASSIZE-scale.current)/CANVASSIZE + "a");
-
-    position.current.x += (PREVSCALE-AFTERSCALE)*PXCOORDX;
-    position.current.y += (PREVSCALE-AFTERSCALE)*PXCOORDY;
+    //ANCHOR:
+    position.current.x += (PREVSCALE-AFTERSCALE)*PRECPXCOORDX;
+    position.current.y += (PREVSCALE-AFTERSCALE)*PRECPXCOORDY;
   };
   
   useEffect(() => {
@@ -273,7 +287,10 @@ const Movement = ({ canvas, context, handle }) => {
   }, [canvas, context]);
 
   return (
-    <Buttons bar="corner" zoomin={() => handleScale(500)} zoomout={() => handleScale(-500)} posx={coordX} posy={coordY} mousex={mouseX} mousey={mouseY}/> 
+    <>
+    <Buttons bar="corner" zoomin={() => handleScale(500)} zoomout={() => handleScale(-500)} posx={coordX} posy={coordY} mousex={mouseX} mousey={mouseY}/>
+	<Buttons bar="palette" />
+	</>
   );
 
 
