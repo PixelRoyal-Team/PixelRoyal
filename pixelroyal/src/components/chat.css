@@ -1,0 +1,77 @@
+#chatcontent::-webkit-scrollbar
+{
+  width: 8px;
+	background-color: transparent;
+}
+
+#chatcontent::-webkit-scrollbar-thumb
+{
+  border: 2px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+	border-radius: 10px;
+	background-color: #0000006c;
+}
+
+#bar{
+  border-top: 1px solid rgb(205 203 203);
+}
+
+#bar input{
+  height: 2rem;
+  padding-left: .75rem;
+  border: none;
+  background: none;
+  width: 14rem;
+}
+
+#bar p{
+  height: 2rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 0;
+  justify-content: center;
+  font-size: 14px;
+}
+
+#bar input:focus{
+  border: none;
+  outline: none;
+}
+
+#bar button{
+  color: #1a73e8;
+  outline: none;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  height: 100%;
+}
+
+#bar button:hover {
+  color: #145fc2;
+}
+
+.chatmsg{
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  padding: 0.25rem 0;
+}
+
+.chatmsg b{
+  margin-right: 10px;
+}
+
+.chatmsg p{
+  max-width: 11rem;
+  margin: 0;
+}
+
+#chattime{
+  color: #a3a3a3;
+  font-size: 12px;
+  text-align: right;
+  margin-left: auto;
+}
