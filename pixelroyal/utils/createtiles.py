@@ -46,7 +46,6 @@ for i in tqdm(range(9)): # Creates zoom tiles
             
             if i == 8:
                 image = generatetile(x, y)
-                print("yes")
             else:
                 image = Image.new('RGB', (chunksize, chunksize), color=(202, 227, 255))
                 
