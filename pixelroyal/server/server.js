@@ -21,12 +21,12 @@ dotenv.config({path: '../../.env'});
 console.log(process.env.DB_HOST);
 
 const app = express();
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 80;
 
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:8080", "http://127.0.0.1:8080"],
+        origin: ["http://localhost:80", "http://127.0.0.1:80"],
         methods: ['GET', 'POST']
     }
 });
@@ -64,7 +64,7 @@ app.use('/tiles', tileserver);
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  password: process.env.DB_PASS,
   database: process.env.DB_NAME,
 });
 
